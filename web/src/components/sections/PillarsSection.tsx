@@ -1,109 +1,114 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ease, staggerContainer, revealMotion, revealTransition, staggerContainerSlow } from "@/lib/motion";
+import { easeCss } from "@/lib/motion";
 
-gsap.registerPlugin(ScrollTrigger);
-
-const pillars = [
+const experiences = [
   {
-    number: "01",
-    title: "Campo Áurico",
+    label: "Cinema Atelier",
+    title: "Filmes tratados como obras, não como miniaturas.",
     description:
-      "O campo energético invisível que envolve cada ser vivo, carregando informações sobre o estado físico, emocional e espiritual — uma impressão digital da alma.",
-    glyph: "◈",
+      "Restauros 4K, estreias de festivais, trilhas sem compressão agressiva e sessões programadas por curadores convidados.",
+    accent: "Premieres privadas / acervo restaurado",
   },
   {
-    number: "02",
-    title: "Sincronia Vibracional",
+    label: "Arena Prime",
+    title: "Esporte ao vivo com latência baixa e direção premium.",
     description:
-      "O alinhamento dos campos energéticos entre dois ou mais seres, criando uma ressonância que transcende o espaço e o tempo — a linguagem silenciosa do universo.",
-    glyph: "◎",
+      "Canais internacionais, múltiplas câmeras, replay inteligente e uma camada silenciosa de estatísticas para quem quer precisão sem poluição visual.",
+    accent: "Futebol, tênis, F1, lutas e eventos fechados",
   },
   {
-    number: "03",
-    title: "Transmutação",
+    label: "Global Rooms",
+    title: "Canais raros, organizados por atmosfera.",
     description:
-      "A capacidade de transformar padrões energéticos densos em frequências mais elevadas, acelerando a evolução da consciência além dos limites conhecidos.",
-    glyph: "◉",
+      "Notícias, cultura, música, gastronomia e documentários de vários países reunidos em salas editoriais que parecem uma revista viva.",
+    accent: "Europa / Ásia / Américas / canais boutique",
   },
-];
+] as const;
 
 export default function PillarsSection() {
-  const headerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        headerRef.current,
-        { opacity: 0, y: 40 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: headerRef.current,
-            start: "top 80%",
-            toggleActions: "play none none reverse",
-          },
-        }
-      );
-    });
-
-    return () => ctx.revert();
-  }, []);
-
   return (
-    <section id="pilares" className="py-32 px-6">
-      <div className="max-w-6xl mx-auto">
-        <div ref={headerRef} className="mb-24 opacity-0">
-          <p className="font-sans text-[10px] tracking-[0.45em] uppercase text-gold/35 mb-5">
-            Os Três Pilares
-          </p>
-          <h2 className="font-serif font-light leading-[1.05]"
-            style={{ fontSize: "clamp(2.4rem, 6vw, 5rem)" }}>
-            A Estrutura da
+    <section id="colecao" aria-labelledby="colecao-heading" className="relative px-6 py-32">
+      <div className="mx-auto max-w-6xl">
+        <motion.div
+          className="mb-20 grid gap-8 lg:grid-cols-[0.8fr_1.2fr]"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={staggerContainer}
+        >
+          <motion.p
+            className="font-sans text-[10px] uppercase tracking-[0.45em] text-signal/50"
+            variants={revealMotion}
+            transition={revealTransition}
+          >
+            A coleção
+          </motion.p>
+          <motion.h2
+            id="colecao-heading"
+            className="font-serif font-light leading-[1.02] text-white"
+            style={{ fontSize: "clamp(2.7rem, 6vw, 6rem)" }}
+            variants={revealMotion}
+            transition={{ ...revealTransition, duration: 1.1 }}
+          >
+            Não vendemos canais.
             <br />
-            <em className="text-gold/75 not-italic">Consciência Energética</em>
-          </h2>
-        </div>
+            Desenhamos noites.
+          </motion.h2>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px" style={{ background: "rgba(255,255,255,0.04)" }}>
-          {pillars.map((p, i) => (
-            <motion.div
-              key={i}
-              className="bg-base p-10 flex flex-col group cursor-default"
-              style={{ background: "#030305" }}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.9, delay: i * 0.18, ease: [0.21, 1.02, 0.73, 1] }}
+        <motion.ul
+          className="grid grid-cols-1 gap-px bg-white/10 lg:grid-cols-3"
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainerSlow}
+          role="list"
+          aria-label="Experiências da coleção"
+        >
+          {experiences.map((item) => (
+            <motion.li
+              key={item.label}
+              className="group min-h-[420px] bg-base/95 p-8 backdrop-blur-xl sm:p-10 list-none"
+              variants={revealMotion}
+              transition={revealTransition}
+              whileHover={{ y: -8, transition: { duration: 0.45, ease: ease.materialize } }}
               data-hover
             >
-              <div className="text-4xl text-gold/20 group-hover:text-gold/50 transition-colors duration-600 mb-10 select-none">
-                {p.glyph}
+              <div className="mb-12 flex items-center justify-between gap-6">
+                <span className="font-sans text-[9px] uppercase tracking-[0.38em] text-platinum/42">
+                  {item.label}
+                </span>
+                <span
+                  className="h-2 w-10 bg-signal/35 transition-all duration-500 group-hover:w-16 group-hover:bg-platinum"
+                  style={{ transitionTimingFunction: easeCss.materialize }}
+                  aria-hidden="true"
+                />
               </div>
 
-              <span className="font-sans text-[9px] tracking-[0.45em] text-white/18 uppercase mb-4 block">
-                {p.number}
-              </span>
-
-              <h3 className="font-serif text-2xl font-light text-white/85 group-hover:text-white mb-6 transition-colors duration-500 leading-tight">
-                {p.title}
+              <h3
+                className="mb-8 font-serif text-3xl font-light leading-tight text-white/88 transition-colors duration-500 group-hover:text-white"
+                style={{ transitionTimingFunction: easeCss.materialize }}
+              >
+                {item.title}
               </h3>
-
-              <p className="font-sans text-[13px] leading-[1.75] text-white/35 group-hover:text-white/55 transition-colors duration-500 flex-1">
-                {p.description}
+              <p
+                className="font-sans text-sm leading-7 text-white/45 transition-colors duration-500 group-hover:text-white/62"
+                style={{ transitionTimingFunction: easeCss.materialize }}
+              >
+                {item.description}
               </p>
 
-              <div className="mt-10 h-px bg-gold/15 group-hover:bg-gold/45 transition-all duration-500 origin-left"
-                style={{ transition: "background 0.5s, width 0.5s" }} />
-            </motion.div>
+              <div className="mt-14 border-t border-white/8 pt-6">
+                <p className="font-sans text-[10px] uppercase leading-5 tracking-[0.28em] text-platinum/42">
+                  {item.accent}
+                </p>
+              </div>
+            </motion.li>
           ))}
-        </div>
+        </motion.ul>
       </div>
     </section>
   );

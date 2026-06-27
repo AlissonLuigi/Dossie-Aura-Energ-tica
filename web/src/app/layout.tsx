@@ -19,14 +19,60 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Aura Energética",
-  description: "Sincronia Bio-Energética — Uma experiência além do convencional",
+  metadataBase: new URL("https://luxesignal.com.br"),
+  title: {
+    default: "LUXE SIGNAL — Televisão com cerimônia",
+    template: "%s — LUXE SIGNAL",
+  },
+  description:
+    "Uma assinatura de TV concebida como coleção: canais internacionais, cinema restaurado, esportes ao vivo e premieres privadas, organizados por curadores humanos.",
+  keywords: ["TV por assinatura premium", "televisão de luxo", "curadoria de conteúdo", "LUXE SIGNAL"],
+  authors: [{ name: "LUXE SIGNAL" }],
+  creator: "LUXE SIGNAL",
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: "https://luxesignal.com.br",
+    siteName: "LUXE SIGNAL",
+    title: "LUXE SIGNAL — Televisão com cerimônia",
+    description:
+      "Uma assinatura de TV concebida como coleção: canais internacionais, cinema restaurado, esportes ao vivo e premieres privadas.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "LUXE SIGNAL — Televisão com cerimônia",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LUXE SIGNAL — Televisão com cerimônia",
+    description:
+      "Uma assinatura de TV concebida como coleção. Curadoria humana. Sem algoritmo.",
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${inter.variable} ${cormorant.variable}`}>
       <body>
+        <a href="#main-content" className="skip-link">
+          Pular para o conteúdo principal
+        </a>
         <LenisProvider>
           <CustomCursor />
           {children}

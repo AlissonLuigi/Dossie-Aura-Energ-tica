@@ -1,155 +1,183 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Stars, Float, MeshDistortMaterial } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 
-function OrbCore() {
-  const meshRef = useRef<THREE.Mesh>(null);
+type PerfTier = "low" | "medium" | "high";
 
-  useFrame(({ clock }) => {
-    if (!meshRef.current) return;
-    meshRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.25) * 0.15;
-    meshRef.current.rotation.y += 0.004;
-  });
-
-  return (
-    <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.4}>
-      <mesh ref={meshRef} position={[0, 0, -1]}>
-        <icosahedronGeometry args={[2, 5]} />
-        <MeshDistortMaterial
-          color="#2A0A5E"
-          emissive="#7C3AED"
-          emissiveIntensity={0.4}
-          distort={0.35}
-          speed={1.8}
-          roughness={0.1}
-          metalness={0.9}
-          transparent
-          opacity={0.85}
-        />
-      </mesh>
-    </Float>
-  );
+function detectPerfTier(): PerfTier {
+  if (typeof window === "undefined") return "medium";
+  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  const memory = (navigator as { deviceMemory?: number }).deviceMemory ?? 4;
+  if (isMobile || memory <= 2) return "low";
+  if (memory <= 4) return "medium";
+  return "high";
 }
 
-function GoldRing() {
-  const ref = useRef<THREE.Mesh>(null);
+const TIER_CONFIG = {
+  low:    { count: 800,  dpr: [1, 1]   as [number, number], bloom: false },
+  medium: { count: 1400, dpr: [1, 1.5] as [number, number], bloom: true  },
+  high:   { count: 2200, dpr: [1, 2]   as [number, number], bloom: true  },
+} as const;
 
-  useFrame(({ clock }) => {
-    if (!ref.current) return;
-    ref.current.rotation.x = clock.elapsedTime * 0.12;
-    ref.current.rotation.z = clock.elapsedTime * 0.08;
-  });
-
-  return (
-    <mesh ref={ref} position={[0, 0, -1]}>
-      <torusGeometry args={[2.8, 0.012, 16, 200]} />
-      <meshStandardMaterial
-        color="#D4AF37"
-        emissive="#D4AF37"
-        emissiveIntensity={1.2}
-        roughness={0}
-        metalness={1}
-      />
-    </mesh>
-  );
+function seededRandom(seed: number) {
+  const x = Math.sin(seed * 19.1947) * 34758.921;
+  return x - Math.floor(x);
 }
 
-function GoldRing2() {
-  const ref = useRef<THREE.Mesh>(null);
-
-  useFrame(({ clock }) => {
-    if (!ref.current) return;
-    ref.current.rotation.x = -clock.elapsedTime * 0.09;
-    ref.current.rotation.y = clock.elapsedTime * 0.06;
-  });
-
-  return (
-    <mesh ref={ref} position={[0, 0, -1]}>
-      <torusGeometry args={[3.4, 0.008, 16, 200]} />
-      <meshStandardMaterial
-        color="#F0D060"
-        emissive="#F0D060"
-        emissiveIntensity={0.8}
-        roughness={0}
-        metalness={1}
-        transparent
-        opacity={0.5}
-      />
-    </mesh>
-  );
-}
-
-function Particles() {
+function SignalField({ count }: { count: number }) {
   const ref = useRef<THREE.Points>(null);
 
   const geometry = useMemo(() => {
-    const count = 4000;
     const geo = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
-      const r = 4 + Math.random() * 10;
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = r * Math.cos(phi);
+      const band = Math.floor(seededRandom(i + 10) * 9) - 4;
+      positions[i * 3]     = (seededRandom(i + 31) - 0.5) * 15;
+      positions[i * 3 + 1] = band * 0.42 + (seededRandom(i + 52) - 0.5) * 0.1;
+      positions[i * 3 + 2] = (seededRandom(i + 73) - 0.5) * 12;
     }
 
     geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     return geo;
-  }, []);
+  }, [count]);
+
+  // Cleanup on unmount — prevent GPU memory leak
+  useEffect(() => () => { geometry.dispose(); }, [geometry]);
 
   useFrame(({ clock }) => {
     if (!ref.current) return;
-    ref.current.rotation.y = clock.elapsedTime * 0.03;
-    ref.current.rotation.x = Math.sin(clock.elapsedTime * 0.015) * 0.08;
+    ref.current.position.x = Math.sin(clock.elapsedTime * 0.12) * 0.18;
+    ref.current.rotation.y = Math.sin(clock.elapsedTime * 0.08) * 0.06;
   });
 
   return (
     <points ref={ref} geometry={geometry}>
-      <pointsMaterial
-        size={0.025}
-        color="#D4AF37"
-        transparent
-        opacity={0.55}
-        sizeAttenuation
-      />
+      <pointsMaterial color="#B9DFFF" size={0.018} transparent opacity={0.58} sizeAttenuation />
     </points>
   );
 }
 
+function BroadcastScreens() {
+  const groupRef = useRef<THREE.Group>(null);
+  const lineRef  = useRef<THREE.LineSegments>(null);
+
+  const screens = useMemo(
+    () =>
+      [
+        [-2.5, 0.7, -1.2, -0.18, 0.22, 1.35],
+        [0, 0.25, -1.75, 0.02, 0, 1.55],
+        [2.45, 0.9, -1.3, 0.16, -0.24, 1.25],
+        [-1.35, -1.1, -0.6, 0.12, -0.08, 0.92],
+        [1.4, -0.95, -0.7, -0.08, 0.12, 1.02],
+      ] as const,
+    []
+  );
+
+  const lineGeometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    const points: number[] = [];
+
+    screens.forEach((screen, i) => {
+      const [x, y, z] = screen;
+      const next = screens[(i + 1) % screens.length];
+      points.push(x, y, z, next[0], next[1], next[2]);
+      points.push(0, 0, -1.25, x, y, z);
+    });
+
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
+    return geo;
+  }, [screens]);
+
+  useEffect(() => () => { lineGeometry.dispose(); }, [lineGeometry]);
+
+  useFrame(({ clock }) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(clock.elapsedTime * 0.18) * 0.14;
+      groupRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.11) * 0.05;
+    }
+    if (lineRef.current) {
+      const mat = lineRef.current.material as THREE.LineBasicMaterial;
+      mat.opacity = 0.22 + Math.sin(clock.elapsedTime * 1.4) * 0.08;
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0.7, -0.05, -0.6]}>
+      <lineSegments ref={lineRef} geometry={lineGeometry}>
+        <lineBasicMaterial color="#D8C6A4" transparent opacity={0.28} />
+      </lineSegments>
+
+      {screens.map(([x, y, z, rx, ry, scale], index) => (
+        <group key={`${x}-${y}`} position={[x, y, z]} rotation={[rx, ry, 0]} scale={scale}>
+          <mesh>
+            <boxGeometry args={[1.62, 0.94, 0.035]} />
+            <meshPhysicalMaterial
+              color={index === 1 ? "#D8C6A4" : "#0D1626"}
+              emissive={index === 1 ? "#7CC7FF" : "#243F66"}
+              emissiveIntensity={index === 1 ? 0.8 : 0.42}
+              metalness={0.45}
+              roughness={0.18}
+              transparent
+              opacity={0.88}
+            />
+          </mesh>
+          <mesh position={[0, 0, 0.025]}>
+            <planeGeometry args={[1.45, 0.72]} />
+            <meshBasicMaterial
+              color={index === 1 ? "#F4E8D0" : "#96D8FF"}
+              transparent
+              opacity={index === 1 ? 0.2 : 0.12}
+            />
+          </mesh>
+          <mesh position={[0, -0.52, 0.04]}>
+            <boxGeometry args={[0.72, 0.012, 0.012]} />
+            <meshBasicMaterial color={index === 1 ? "#F4E8D0" : "#7CC7FF"} transparent opacity={0.72} />
+          </mesh>
+        </group>
+      ))}
+
+      <mesh position={[0, 0, -1.28]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[2.8, 0.006, 12, 220]} />
+        <meshBasicMaterial color="#D8C6A4" transparent opacity={0.38} />
+      </mesh>
+      <mesh position={[0, 0, -1.28]} rotation={[Math.PI / 2.45, 0.22, 0.08]}>
+        <torusGeometry args={[3.42, 0.004, 12, 220]} />
+        <meshBasicMaterial color="#7CC7FF" transparent opacity={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
 export default function ParticleScene() {
+  const [tier] = useState<PerfTier>(() => detectPerfTier());
+  const config = TIER_CONFIG[tier];
+
   return (
     <Canvas
-      camera={{ position: [0, 0, 6], fov: 55 }}
-      gl={{ antialias: true, alpha: false }}
-      dpr={[1, 1.5]}
+      camera={{ position: [0, 0, 6.2], fov: 48 }}
+      gl={{ antialias: tier !== "low", alpha: false }}
+      dpr={config.dpr}
     >
-      <color attach="background" args={["#030305"]} />
-      <ambientLight intensity={0.3} />
-      <pointLight position={[3, 3, 3]} color="#D4AF37" intensity={3} />
-      <pointLight position={[-3, -2, -3]} color="#7C3AED" intensity={2} />
-      <pointLight position={[0, -4, 2]} color="#4B1C8C" intensity={1.5} />
+      <color attach="background" args={["#05070B"]} />
+      <fog attach="fog" args={["#05070B", 5.5, 13]} />
+      <ambientLight intensity={0.35} />
+      <pointLight position={[2, 2.6, 2]}    color="#D8C6A4" intensity={3.2} />
+      <pointLight position={[-3.6, -1.4, 1]} color="#7CC7FF" intensity={2.7} />
+      <pointLight position={[2, -3, -2]}    color="#6B4CFF" intensity={1.6} />
 
-      <Stars radius={60} depth={60} count={6000} factor={3} saturation={0} fade speed={0.8} />
-      <Particles />
-      <OrbCore />
-      <GoldRing />
-      <GoldRing2 />
+      <SignalField count={config.count} />
+      <BroadcastScreens />
 
-      <EffectComposer>
-        <Bloom
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.85}
-          intensity={2.5}
-          mipmapBlur
-        />
-      </EffectComposer>
+      {config.bloom && (
+        <EffectComposer>
+          <Bloom luminanceThreshold={0.16} luminanceSmoothing={0.8} intensity={1.6} mipmapBlur />
+          <Vignette eskil={false} offset={0.18} darkness={0.72} />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }
