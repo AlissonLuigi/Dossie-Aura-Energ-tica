@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { auraEaseCss, auraGsapEase } from "@/lib/motion";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -15,7 +17,15 @@ export default function Navbar() {
     const nav = navRef.current;
     if (!nav) return;
 
-    gsap.fromTo(nav, { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 1, delay: 0.4, ease: "power2.out" });
+    const mm = gsap.matchMedia();
+
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      gsap.set(nav, { y: 0, opacity: 1 });
+    });
+
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.fromTo(nav, { y: -18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, delay: 0.35, ease: auraGsapEase });
+    });
 
     const trigger = ScrollTrigger.create({
       start: "top+=80 top",
@@ -31,17 +41,21 @@ export default function Navbar() {
       },
     });
 
-    return () => trigger.kill();
+    return () => {
+      trigger.kill();
+      mm.revert();
+    };
   }, []);
 
   return (
     <nav
       ref={navRef}
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-5 transition-all duration-500"
+      style={{ transitionTimingFunction: auraEaseCss }}
     >
-      <a href="/" data-hover className="font-serif text-xl font-light tracking-[0.15em] text-white/90">
+      <Link href="/" data-hover className="font-serif text-xl font-light tracking-[0.15em] text-white/90">
         Aura
-      </a>
+      </Link>
 
       <ul className="hidden md:flex items-center gap-10">
         {links.map((item) => (
@@ -50,6 +64,7 @@ export default function Navbar() {
               href={`#${item.toLowerCase()}`}
               data-hover
               className="font-sans text-[10px] tracking-[0.35em] uppercase text-white/35 hover:text-white/75 transition-colors duration-400"
+              style={{ transitionTimingFunction: auraEaseCss }}
             >
               {item}
             </a>
@@ -61,6 +76,7 @@ export default function Navbar() {
         href="/dossie.html"
         data-hover
         className="font-sans text-[10px] tracking-[0.3em] uppercase text-gold border border-gold/25 px-5 py-2.5 rounded-sm hover:bg-gold/8 transition-all duration-300"
+        style={{ transitionTimingFunction: auraEaseCss }}
       >
         Iniciar
       </a>

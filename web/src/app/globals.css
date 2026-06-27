@@ -5,6 +5,8 @@
   --color-gold-light: #F0D060;
   --color-gold-dark: #8A7020;
   --color-base: #030305;
+  --color-platinum: #E2E2E2;
+  --color-signal: #7CC7FF;
   --font-sans: var(--font-inter);
   --font-serif: var(--font-cormorant);
 }

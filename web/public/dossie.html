@@ -778,20 +778,25 @@ document.getElementById('nameInput').addEventListener('keydown', e => {
   if(e.key === 'Enter') initDossie();
 });
 
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
 function initDossie(presetName) {
-  const name = presetName || document.getElementById('nameInput').value.trim();
-  if(!name) { document.getElementById('nameInput').style.borderColor='rgba(220,80,80,0.6)'; return; }
+  const raw = presetName || document.getElementById('nameInput').value.trim();
+  if(!raw) { document.getElementById('nameInput').style.borderColor='rgba(220,80,80,0.6)'; return; }
+  const name = raw.slice(0, 48);
   localStorage.setItem('sfa_dossie_name', name);
 
-  // Hide name screen
   document.getElementById('nameScreen').classList.add('hidden');
   document.getElementById('docWrap').style.display = 'block';
 
-  // Fill name fields
   document.getElementById('coverName').textContent = name;
   document.getElementById('warningName').textContent = name;
   document.getElementById('lineageYou').textContent = name + ' · Em processo de dissolução';
-  document.getElementById('closingName').innerHTML = `Com gratidão pela coragem de <em>${name}</em> em olhar para dentro,<br/>Dossiê de Sincronia Bio-Energética`;
+  document.getElementById('closingName').innerHTML = `Com gratidão pela coragem de <em>${escapeHtml(name)}</em> em olhar para dentro,<br/>Dossiê de Sincronia Bio-Energética`;
 
   // Date
   const d = new Date();

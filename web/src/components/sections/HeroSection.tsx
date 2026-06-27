@@ -4,103 +4,128 @@ import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { auraEaseCss, auraGsapEase } from "@/lib/motion";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const ParticleScene = dynamic(() => import("@/components/three/ParticleScene"), {
   ssr: false,
-  loading: () => <div className="w-full h-full bg-base" />,
+  loading: () => <div className="h-full w-full bg-base" />,
 });
 
-const headline = ["Além", "do", "Visível"];
+const headline = ["Televisão", "com", "cerimônia"];
 
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    const mm = gsap.matchMedia();
 
-      tl.fromTo(
-        ".hero-word",
-        { yPercent: 110, opacity: 0 },
-        { yPercent: 0, opacity: 1, duration: 1.4, stagger: 0.12 }
-      )
-        .fromTo(".hero-eyebrow", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.8")
-        .fromTo(".hero-sub", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.5")
-        .fromTo(".hero-cta", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.5")
-        .fromTo(".hero-scroll", { opacity: 0 }, { opacity: 1, duration: 0.6 }, "-=0.2");
-
-      gsap.to(".hero-content", {
-        yPercent: -25,
-        ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: true,
-        },
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      gsap.set(".hero-word, .hero-kicker, .hero-copy, .hero-action, .hero-spec", {
+        opacity: 1,
+        y: 0,
+        yPercent: 0,
+        filter: "blur(0px)",
       });
-    }, sectionRef);
+    });
 
-    return () => ctx.revert();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      const ctx = gsap.context(() => {
+        const tl = gsap.timeline({ defaults: { ease: auraGsapEase } });
+
+        tl.fromTo(
+          ".hero-word",
+          { yPercent: 116, opacity: 0, filter: "blur(12px)" },
+          { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 1.35, stagger: 0.09 }
+        )
+          .fromTo(".hero-kicker", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.88")
+          .fromTo(".hero-copy", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.95 }, "-=0.45")
+          .fromTo(".hero-action", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.85 }, "-=0.55")
+          .fromTo(".hero-spec", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.75, stagger: 0.08 }, "-=0.35");
+
+        gsap.to(".hero-content", {
+          yPercent: -15,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 0.9,
+          },
+        });
+      }, sectionRef);
+
+      return () => ctx.revert();
+    });
+
+    return () => mm.revert();
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative h-screen w-full overflow-hidden">
+    <section ref={sectionRef} className="relative min-h-[106vh] w-full overflow-hidden">
       <div className="absolute inset-0 z-0">
         <ParticleScene />
       </div>
+      <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_72%_38%,rgba(124,199,255,0.12),transparent_34%),linear-gradient(90deg,rgba(5,7,11,0.98)_0%,rgba(5,7,11,0.62)_44%,rgba(5,7,11,0.2)_100%)] pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 z-[1] h-64 bg-gradient-to-t from-base via-base/70 to-transparent pointer-events-none" />
 
-      <div className="absolute inset-0 z-[1] bg-gradient-to-b from-black/10 via-transparent to-base pointer-events-none" />
-      <div className="absolute inset-0 z-[1] bg-gradient-to-r from-base/40 via-transparent to-base/40 pointer-events-none" />
+      <div className="hero-content relative z-[2] flex min-h-screen flex-col justify-center px-6 pb-20 pt-28 sm:px-10 lg:px-16">
+        <div className="max-w-4xl">
+          <p className="hero-kicker mb-8 font-sans text-[10px] uppercase tracking-[0.5em] text-platinum/55 opacity-0">
+            LUXE SIGNAL / assinatura televisiva privada
+          </p>
 
-      <div className="hero-content relative z-[2] h-full flex flex-col items-center justify-center px-6 text-center">
-        <p className="hero-eyebrow font-sans text-[10px] tracking-[0.5em] text-gold/60 uppercase mb-10 opacity-0">
-          Aura Energética
-        </p>
-
-        <div className="overflow-hidden mb-8">
-          <h1 className="font-serif font-light leading-[0.88] tracking-tight"
-            style={{ fontSize: "clamp(4.5rem, 13vw, 11rem)" }}>
-            {headline.map((word, i) => (
-              <span key={i} className="inline-block overflow-hidden align-bottom mr-[0.18em] last:mr-0">
+          <h1
+            className="mb-9 max-w-5xl font-serif font-light leading-[0.9] text-white"
+            style={{ fontSize: "clamp(4.1rem, 11vw, 10.6rem)" }}
+          >
+            {headline.map((word) => (
+              <span key={word} className="mr-[0.16em] inline-block overflow-hidden align-bottom last:mr-0">
                 <span className="hero-word inline-block opacity-0">{word}</span>
               </span>
             ))}
           </h1>
+
+          <p className="hero-copy max-w-2xl font-sans text-base leading-8 text-white/56 opacity-0 sm:text-lg">
+            Uma assinatura de TV concebida como coleção: canais internacionais, cinema restaurado,
+            esportes ao vivo e premieres privadas, organizados por curadores humanos e entregues em
+            uma interface silenciosa, precisa e sem ruído.
+          </p>
+
+          <div className="hero-action mt-12 flex flex-col gap-4 opacity-0 sm:flex-row">
+            <a
+              href="#reserva"
+              data-hover
+              className="inline-flex items-center justify-center border border-platinum/45 bg-platinum px-8 py-4 font-sans text-[10px] font-medium uppercase tracking-[0.32em] text-base transition-all duration-500 hover:bg-white hover:text-base"
+              style={{ transitionTimingFunction: auraEaseCss }}
+            >
+              Solicitar convite
+            </a>
+            <a
+              href="#colecao"
+              data-hover
+              className="inline-flex items-center justify-center border border-white/12 px-8 py-4 font-sans text-[10px] uppercase tracking-[0.32em] text-white/62 transition-all duration-500 hover:border-signal/45 hover:text-white"
+              style={{ transitionTimingFunction: auraEaseCss }}
+            >
+              Ver curadoria
+            </a>
+          </div>
         </div>
 
-        <p className="hero-sub font-sans font-light tracking-[0.3em] text-white/35 uppercase mb-14 opacity-0"
-          style={{ fontSize: "clamp(0.65rem, 1.5vw, 0.8rem)" }}>
-          Sincronia Bio-Energética
-        </p>
-
-        <div className="hero-cta opacity-0">
-          <a
-            href="#manifesto"
-            data-hover
-            className="group flex items-center gap-4 font-sans text-[10px] tracking-[0.35em] uppercase text-gold border border-gold/25 px-10 py-4 rounded-sm hover:bg-gold/5 hover:border-gold/50 transition-all duration-500"
-          >
-            Explorar
-            <span className="inline-block transition-transform duration-400 group-hover:translate-x-1.5">→</span>
-          </a>
+        <div className="mt-20 grid max-w-5xl grid-cols-1 gap-px bg-white/8 md:grid-cols-3">
+          {[
+            ["8K HDR", "canais masterizados e cinema sob demanda"],
+            ["0 anúncios", "experiência contínua para salas privadas"],
+            ["24h concierge", "troca de plano, eventos e estreias ao vivo"],
+          ].map(([value, label]) => (
+            <div key={value} className="hero-spec bg-base/70 p-5 opacity-0 backdrop-blur-md">
+              <p className="font-serif text-3xl font-light text-platinum">{value}</p>
+              <p className="mt-2 font-sans text-[10px] uppercase leading-5 tracking-[0.28em] text-white/35">{label}</p>
+            </div>
+          ))}
         </div>
       </div>
-
-      <div className="hero-scroll absolute bottom-10 left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-4 opacity-0">
-        <span className="font-sans text-[9px] tracking-[0.45em] text-white/25 uppercase">Scroll</span>
-        <div className="w-px h-14 overflow-hidden">
-          <div className="w-full h-full bg-gradient-to-b from-gold/60 to-transparent animate-[slideDown_2s_ease-in-out_infinite]" />
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes slideDown {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100%); }
-        }
-      `}</style>
     </section>
   );
 }
